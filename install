@@ -97,7 +97,6 @@ do_install()
 
   # ROS infrastructure tools
   brew install libyaml || true
-  sudo easy_install pip
   sudo pip install -U setuptools rosdep rosinstall_generator wstool rosinstall catkin_tools bloom empy sphinx pycurl
 
   brew install qt5 pyqt5 || true
@@ -142,7 +141,7 @@ do_install()
     curl https://raw.githubusercontent.com/ros/catkin/8a47f4eceb4954beb4a5b38b50793d0bbe2c96cf/cmake/catkinConfig.cmake.in > catkinConfig.cmake.in
     popd
   fi
-
+  sudo easy_install pip
   # Package dependencies.
   rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y --as-root pip:no --skip-keys="ppython-qt-bindings-qwt5 libqt5-core libqt5-gui libqt5-opengl libqt5-opengl-dev libqt5-widgets qt5-qmake qtbase5-dev python-imaging python-qt5-bindings python-qt5-bindings-gl python-qt5-bindings-webkit"
 
