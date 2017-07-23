@@ -99,8 +99,8 @@ do_install()
   brew install libyaml || true
   sudo pip install -U setuptools rosdep rosinstall_generator wstool rosinstall catkin_tools bloom empy sphinx pycurl
 
-  brew install qt5 pyqt5
-  brew link qt5 --force
+  brew install qt5 pyqt5 || true
+  brew link qt5 --force || true
   # Initialize and update rosdep
   if [ ! -d /etc/ros/rosdep/ ]; then
     echo "This sudo prompt is to initialize rosdep (creates the /etc/ros/rosdep path)."
