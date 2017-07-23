@@ -122,7 +122,7 @@ do_install()
 
   # Standard source install
   rosinstall_generator ${ROS_CONFIGURATION} ${ROS_EXTRA_PACKAGES} --rosdistro ${ROS_DISTRO} --deps --tar --exclude octomap > ${WS}.rosinstall
-  rosinstall_generator octomap fcl --rosdistro indigo --deps --wet-only --tar --exclude RPP > octomap_fcl.rosinstall
+  rosinstall_generator octomap fcl --rosdistro indigo --deps --wet-only --tar > octomap_fcl.rosinstall
   wstool init src
 
   wstool merge ${WS}.rosinstall -t src
