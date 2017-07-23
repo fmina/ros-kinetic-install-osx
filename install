@@ -97,6 +97,7 @@ do_install()
 
   # ROS infrastructure tools
   brew install libyaml || true
+  sudo easy_install pip
   sudo pip install -U setuptools rosdep rosinstall_generator wstool rosinstall catkin_tools bloom empy sphinx pycurl
 
   brew install qt5 pyqt5 || true
