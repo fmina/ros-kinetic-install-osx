@@ -18,19 +18,11 @@ popd
 pushd $WS
 
 rosinstall_generator ${EXTRA_PACKAGES} --rosdistro kinetic  --deps --wet-only --tar --exclude RPP > extra_packages.rosinstall
-rosinstall_generator fcl --rosdistro indigo  --deps --wet-only --tar --exclude RPP > fcl.rosinstall
 
-wstool merge extra_packages.rosinstall -t src
-wstool merge fcl.rosinstall -t src
-
-pushd src
-
-wstool update -j8
-
-popd
+wstool init -j8 src extra_packages.rosinstall
 
 #patch ompl to link LZ4 Library
-patch -p4 < patches/patch_ompl.diff
+patch -p4 < ../patches/patch_ompl.diff
 
 rosdep -r install --from-paths src --ignore-src --rosdistro kinetic -y --skip-keys="python-qt-bindings-qwt5 libqt5-core libqt5-gui libqt5-opengl libqt5-opengl-dev libqt5-widgets qt5-qmake qtbase5-dev python-imaging python-qt5-bindings python-qt5-bindings-gl python-qt5-bindings-webkit"
 
