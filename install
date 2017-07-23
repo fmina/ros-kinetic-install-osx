@@ -1,0 +1,194 @@
+#!/bin/bash
+# Software License Agreement (BSD)
+#
+# Author    Mike Purvis <mpurvis@clearpathrobotics.com>
+# Copyright (c) 2014-2016, Clearpath Robotics, Inc., All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+# the following conditions are met:
+# * Redistributions of source code must retain the above copyright notice, this list of conditions and the
+#   following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+#   following disclaimer in the documentation and/or other materials provided with the distribution.
+# * Neither the name of Clearpath Robotics nor the names of its contributors may be used to endorse or
+#   promote products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+ROS_DISTRO=${ROS_DISTRO:-indigo}
+ROS_CONFIGURATION=${ROS_CONFIGURATION:-desktop_full}
+ROS_EXTRA_PACKAGES=${ROS_EXTRA_PACKAGES:-}
+ROS_INSTALL_DIR=${ROS_INSTALL_DIR:-/opt/ros/${ROS_DISTRO}}
+
+do_install()
+{
+  set -e
+
+  # Homebrew
+  if ! hash brew 2>/dev/null; then
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    echo export PATH='/usr/local/bin:$PATH' >> ~/.bash_profile
+    source ~/.bash_profile
+    brew doctor
+  fi
+  brew update
+
+  # XQuartz
+  if ! hash xquartz 2>/dev/null; then
+    brew install caskroom/cask/brew-cask
+    brew cask install xquartz
+    echo "Log out and in to finalize XQuartz setup."
+    exit 0
+  fi
+
+  # Check for pip packages in the system Python directory.
+  if [ $(ls /Library/Python/2.7/site-packages/ | wc -l) -gt 1 ]; then
+    echo "These instructions are about to install Python from Homebrew. However, there are already"
+    echo "pip packages installed against the system python, in the following path:"
+    echo
+    echo "    /Library/Python/2.7/site-packages/"
+    echo
+    echo "If you have problems, please uninstall these packages:"
+    echo
+    echo "    for i in \$( pip freeze ); do sudo -H pip uninstall -y \$i; done"
+    echo
+    echo "Then delete the build directory and start over again from scratch."
+  fi
+
+  # Check for root-owned stuff in /usr/local
+  if [ $(find /usr/local/* -maxdepth 3 -type d -user root | wc -l) -gt 1 ]; then
+    echo "Looks like you have some stuff owned by the root user in /usr/local. The installation can"
+    echo "continue, but if there are pip packages which were installed using sudo, this will be a"
+    echo "problem if rosdep tries to update them. If you have issues installing dependencies, consider"
+    echo "nuking your Homebrew installation and starting from scratch:"
+    echo
+    echo "    https://gist.github.com/mxcl/1173223"
+    echo
+    echo "Alternatively, you could try chowning the contents of /usr/local to yourself:"
+    echo
+    echo "    sudo chown -R $USER:admin /usr/local/*"
+  fi
+
+  # Brewed Python
+  if [ $(which python) != "/usr/local/bin/python" ]; then
+    brew install python
+    mkdir -p ~/Library/Python/2.7/lib/python/site-packages
+    echo "$(brew --prefix)/lib/python2.7/site-packages" >> ~/Library/Python/2.7/lib/python/site-packages/homebrew.pth
+  fi
+
+  # Gives us console_bridge, urdfdom, and gtest.
+  brew tap ros/deps
+
+  # This tap gives us formulae for Gazebo and its dependencies, including SDF.
+  brew tap osrf/simulation
+
+  # Homebrew science gives us vtk and PCL, among other things.
+  brew tap homebrew/science
+
+  # Homebrew python gets us bottles for numpy, scipy, etc.
+  brew tap homebrew/python
+
+  # ROS infrastructure tools
+  brew install libyaml || true
+  sudo pip install -U setuptools rosdep rosinstall_generator wstool rosinstall catkin_tools bloom empy sphinx pycurl
+
+  brew install qt5 pyqt5
+  brew link qt5 --force
+  # Initialize and update rosdep
+  if [ ! -d /etc/ros/rosdep/ ]; then
+    echo "This sudo prompt is to initialize rosdep (creates the /etc/ros/rosdep path)."
+    sudo rosdep init
+  fi
+  if [ ! -f /etc/ros/rosdep/10-ros-install-osx.list ]; then
+    echo "This sudo prompt adds the the brewed python rosdep yaml to /etc/ros/rosdep/10-ros-install-osx.list."
+    sudo sh -c "echo 'yaml https://raw.githubusercontent.com/mikepurvis/ros-install-osx/master/rosdeps.yaml osx' > /etc/ros/rosdep/sources.list.d/10-ros-install-osx.list"
+  fi
+  rosdep update
+
+  # Remove previous workspace if present, create and enter new one.
+  WS=${ROS_DISTRO}_${ROS_CONFIGURATION}_ws
+  if [ -d "$WS" ]; then
+    rm -rf "$WS"
+  fi
+  mkdir $WS
+  pushd $WS
+
+  # Standard source install
+  rosinstall_generator ${ROS_CONFIGURATION} ${ROS_EXTRA_PACKAGES} --rosdistro ${ROS_DISTRO} --deps --tar > ${WS}.rosinstall
+  wstool init -j8 src ${WS}.rosinstall
+
+  # Grabbing these older meshes allows rviz to run with Ogre 1.7 rather than Ogre 1.8+.
+  # Some details here: https://github.com/ros-visualization/rviz/issues/782
+  if [ -d src/rviz ]; then
+    pushd src/rviz/ogre_media/models
+    curl https://raw.githubusercontent.com/ros-visualization/rviz/hydro-devel/ogre_media/models/rviz_cone.mesh > rviz_cone.mesh
+    curl https://raw.githubusercontent.com/ros-visualization/rviz/hydro-devel/ogre_media/models/rviz_cube.mesh > rviz_cube.mesh
+    curl https://raw.githubusercontent.com/ros-visualization/rviz/hydro-devel/ogre_media/models/rviz_cylinder.mesh > rviz_cylinder.mesh
+    curl https://raw.githubusercontent.com/ros-visualization/rviz/hydro-devel/ogre_media/models/rviz_sphere.mesh > rviz_sphere.mesh
+    popd
+  fi
+
+  # This patch originates from here: https://github.com/ros/catkin/pull/784
+  if [ -d src/catkin ]; then
+    pushd src/catkin/cmake
+    curl https://raw.githubusercontent.com/ros/catkin/8a47f4eceb4954beb4a5b38b50793d0bbe2c96cf/cmake/catkinConfig.cmake.in > catkinConfig.cmake.in
+    popd
+  fi
+
+  # Package dependencies.
+  rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y --as-root pip:no --skip-keys="ppython-qt-bindings-qwt5 libqt5-core libqt5-gui libqt5-opengl libqt5-opengl-dev libqt5-widgets qt5-qmake qtbase5-dev python-imaging python-qt5-bindings python-qt5-bindings-gl python-qt5-bindings-webkit"
+
+  # Clean out or create the install directory.
+  if [ -d ${ROS_INSTALL_DIR} ]; then
+    rm -rf ${ROS_INSTALL_DIR}/*
+  else
+    echo "This sudo prompt is to create and chown ${ROS_INSTALL_DIR}."
+    sudo mkdir -p ${ROS_INSTALL_DIR}
+    sudo chown $USER ${ROS_INSTALL_DIR}
+  fi
+
+  #fix problems of Qt5 and PyQt5
+  ln -sf /usr/local/share/sip/Qt5 /usr/local/share/sip/PyQt5
+
+  QT_VERSION=$(python -c "from PyQt5.QtCore import QT_VERSION_STR; print QT_VERSION_STR")
+  ln -sf /usr/local/Cellar/qt/${QT_VERSION}/plugins /usr/local/plugins
+  ln -sf /usr/local/Cellar/qt/${QT_VERSION}/mkspecs /usr/local/mkspecs
+
+
+  # Parallel build.
+  catkin config --install  --install-space ${ROS_INSTALL_DIR} --cmake-args \
+    -DCATKIN_ENABLE_TESTING=1 \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DPYTHON_LIBRARY=$(python -c "import sys; print sys.prefix")/lib/libpython2.7.dylib \
+    -DPYTHON_INCLUDE_DIR=$(python -c "import sys; print sys.prefix")/include/python2.7 \
+    -DCMAKE_FIND_FRAMEWORK=LAST
+  catkin build --limit-status-rate 1
+  popd
+
+  echo "Installation successful, please source the ROS workspace:"
+  echo
+  echo "  source ${ROS_INSTALL_DIR}/setup.bash"
+  echo
+
+  # Check for SIP if on OSX/macOS 10.11 (El Capitan) or later
+  if [[ `sw_vers -productVersion` > "10.10" ]]
+  then
+    if `csrutil status | grep -q enabled`
+    then
+      echo "You have System Integrity Protection enabled."
+      echo
+      echo "This prevents DYLD_LIBRARY_PATH from being exported to subshells"
+      echo "Please add: export DYLD_LIBRARY_PATH=\$DYLD_LIBRARY_PATH:/opt/ros/\$ROS_DISTRO/lib"
+      echo "To the start of /opt/ros/$ROS_DISTRO/bin/rosrun to work around the issue."
+    fi
+  fi
+}
+
+do_install
