@@ -18,4 +18,4 @@ cache:
     - $HOME/Library/Caches/Homebrew
 
 script:
-  - ./install_all
+  - ./install
