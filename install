@@ -121,8 +121,16 @@ do_install()
   pushd $WS
 
   # Standard source install
-  rosinstall_generator ${ROS_CONFIGURATION} ${ROS_EXTRA_PACKAGES} --rosdistro ${ROS_DISTRO} --deps --tar > ${WS}.rosinstall
-  wstool init -j8 src ${WS}.rosinstall
+  rosinstall_generator ${ROS_CONFIGURATION} ${ROS_EXTRA_PACKAGES} --rosdistro ${ROS_DISTRO} --deps --tar --exclude octomap > ${WS}.rosinstall
+  rosinstall_generator octomap fcl --rosdistro indigo --deps --wet-only --tar --exclude RPP > octomap_fcl.rosinstall
+  wstool init src
+
+  wstool merge ${WS}.rosinstall -t src
+  wstool merge octomap_fcl.rosinstall -t src -y
+
+  pushd src
+  wstool update -j8
+  popd
 
   # Grabbing these older meshes allows rviz to run with Ogre 1.7 rather than Ogre 1.8+.
   # Some details here: https://github.com/ros-visualization/rviz/issues/782
@@ -143,7 +151,7 @@ do_install()
   fi
   sudo easy_install pip
   # Package dependencies.
-  rosdep -r install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y --as-root pip:no --skip-keys="ppython-qt-bindings-qwt5 libqt5-core libqt5-gui libqt5-opengl libqt5-opengl-dev libqt5-widgets qt5-qmake qtbase5-dev python-imaging python-qt5-bindings python-qt5-bindings-gl python-qt5-bindings-webkit"
+  rosdep -r install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y --as-root pip:yes --skip-keys="ppython-qt-bindings-qwt5 libqt5-core libqt5-gui libqt5-opengl libqt5-opengl-dev libqt5-widgets qt5-qmake qtbase5-dev python-imaging python-qt5-bindings python-qt5-bindings-gl python-qt5-bindings-webkit" || true
 
   # Clean out or create the install directory.
   if [ -d ${ROS_INSTALL_DIR} ]; then
