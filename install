@@ -75,6 +75,8 @@ do_install()
     echo
     echo "    sudo chown -R $USER:admin /usr/local/*"
   fi
+  
+  sudo chown -R $USER:admin /usr/local/*
 
   # Brewed Python
   if [ $(which python) != "/usr/local/bin/python" ]; then
