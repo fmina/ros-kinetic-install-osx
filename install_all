@@ -2,7 +2,7 @@
 
 ROS_DISTRO=kinetic
 
-./install
+#./install
 
 EXTRA_PACKAGES="ompl octomap_ros octomap_msgs dynamic_edt_3d multimaster_fkie node_manager_fkie master_discovery_fkie"
 WS=extra_ros_packages_ws
@@ -10,11 +10,7 @@ WS=extra_ros_packages_ws
 if [ -d "$WS" ]; then
   rm -rf "$WS"
 fi
-mkdir -p $WS/src
-pushd $WS/src
-wstool init
-
-popd
+mkdir $WS
 pushd $WS
 
 rosinstall_generator ${EXTRA_PACKAGES} --rosdistro kinetic  --deps --wet-only --tar --exclude RPP > extra_packages.rosinstall
@@ -22,7 +18,7 @@ rosinstall_generator ${EXTRA_PACKAGES} --rosdistro kinetic  --deps --wet-only --
 wstool init -j8 src extra_packages.rosinstall
 
 #patch ompl to link LZ4 Library
-patch -p4 < ../patches/patch_ompl.diff
+patch -p5 < ../patches/patch_ompl.diff
 
 rosdep -r install --from-paths src --ignore-src --rosdistro kinetic -y --skip-keys="python-qt-bindings-qwt5 libqt5-core libqt5-gui libqt5-opengl libqt5-opengl-dev libqt5-widgets qt5-qmake qtbase5-dev python-imaging python-qt5-bindings python-qt5-bindings-gl python-qt5-bindings-webkit"
 
@@ -33,4 +29,4 @@ catkin config --extend /opt/ros/kinetic --install  --install-space /opt/ros/kine
   -DPYTHON_INCLUDE_DIR=$(python -c "import sys; print sys.prefix")/include/python2.7 \
   -DCMAKE_FIND_FRAMEWORK=LAST
 
-#catkin build --limit-status-rate 1
+catkin build --limit-status-rate 1

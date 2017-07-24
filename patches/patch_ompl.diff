@@ -15,7 +15,7 @@
    ${Boost_CHRONO_LIBRARY}
 -  ${CMAKE_THREAD_LIBS_INIT})
 +  ${CMAKE_THREAD_LIBS_INIT}
-+  ${LZ4)
++  ${LZ4})
 
  if(MSVC)
    set_target_properties(ompl PROPERTIES VERSION "${OMPL_VERSION}" STATIC_LIBRARY_FLAGS "psapi.lib ws2_32.lib")
