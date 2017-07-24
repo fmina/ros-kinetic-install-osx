@@ -100,6 +100,9 @@ do_install()
   # ROS infrastructure tools
   brew install libyaml || true
   sudo pip install -U setuptools rosdep rosinstall_generator wstool rosinstall catkin_tools bloom empy sphinx pycurl
+  
+  mkdir -p ~/Library/Python/2.7/lib/python/site-packages
+  echo 'import site; site.addsitedir("/usr/local/lib/python2.7/site-packages")' >> ~/Library/Python/2.7/lib/python/site-packages/homebrew.pth
 
   echo "Installing qt5 and pyqt5"
   brew install qt5 pyqt5 || true
