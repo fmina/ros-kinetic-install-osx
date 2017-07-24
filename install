@@ -75,7 +75,7 @@ do_install()
     echo
     echo "    sudo chown -R $USER:admin /usr/local/*"
   fi
-  
+
   sudo chown -R $USER:admin /usr/local/*
 
   # Brewed Python
@@ -100,7 +100,7 @@ do_install()
   # ROS infrastructure tools
   brew install libyaml || true
   sudo pip install -U setuptools rosdep rosinstall_generator wstool rosinstall catkin_tools bloom empy sphinx pycurl
-  
+
   #mkdir -p ~/Library/Python/2.7/lib/python/site-packages
   #echo 'import site; site.addsitedir("/usr/local/lib/python2.7/site-packages")' >> ~/Library/Python/2.7/lib/python/site-packages/homebrew.pth
 
@@ -169,11 +169,11 @@ do_install()
   fi
 
   #fix problems of Qt5 and PyQt5
-  ln -sf /usr/local/share/sip/Qt5 /usr/local/share/sip/PyQt5
+  sudo ln -sf /usr/local/share/sip/Qt5 /usr/local/share/sip/PyQt5
 
   QT_VERSION=$(python -c "from PyQt5.QtCore import QT_VERSION_STR; print QT_VERSION_STR")
-  ln -sf /usr/local/Cellar/qt/${QT_VERSION}/plugins /usr/local/plugins
-  ln -sf /usr/local/Cellar/qt/${QT_VERSION}/mkspecs /usr/local/mkspecs
+  sudo ln -sf /usr/local/Cellar/qt/${QT_VERSION}/plugins /usr/local/plugins
+  sudo ln -sf /usr/local/Cellar/qt/${QT_VERSION}/mkspecs /usr/local/mkspecs
 
 
   # Parallel build.
