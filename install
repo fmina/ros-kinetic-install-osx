@@ -79,11 +79,11 @@ do_install()
   sudo chown -R $USER:admin /usr/local/*
 
   # Brewed Python
-  if [ $(which python) != "/usr/local/bin/python" ]; then
-    brew install python
-    mkdir -p ~/Library/Python/2.7/lib/python/site-packages
-    echo "$(brew --prefix)/lib/python2.7/site-packages" >> ~/Library/Python/2.7/lib/python/site-packages/homebrew.pth
-  fi
+  #if [ $(which python) != "/usr/local/bin/python" ]; then
+  brew install python
+  mkdir -p ~/Library/Python/2.7/lib/python/site-packages
+  echo "$(brew --prefix)/lib/python2.7/site-packages" >> ~/Library/Python/2.7/lib/python/site-packages/homebrew.pth
+  #fi
 
   # Gives us console_bridge, urdfdom, and gtest.
   brew tap ros/deps
