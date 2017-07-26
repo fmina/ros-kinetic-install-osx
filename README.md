@@ -12,8 +12,8 @@ Usage
 -----
 The full insall is carried out via
 
-  curl https://raw.githubusercontent.com/fmina/ros-kinetic-install-osx/master/install | bash
+  `curl https://raw.githubusercontent.com/fmina/ros-kinetic-install-osx/master/install | bash`
 
 We also have some extra packages (e.g. OMPL, ROS Octomap Wrapper) that can be installed via
 
-  curl https://raw.githubusercontent.com/fmina/ros-kinetic-install-osx/master/install_extra | bash
+  `curl https://raw.githubusercontent.com/fmina/ros-kinetic-install-osx/master/install_extra | bash`
