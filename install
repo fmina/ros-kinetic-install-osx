@@ -172,7 +172,7 @@ do_install()
   #fix problems of Qt5 and PyQt5
   sudo ln -sf /usr/local/share/sip/Qt5 /usr/local/share/sip/PyQt5
 
-  QT_VERSION=$(python -c "from PyQt5.QtCore import QT_VERSION_STR; print QT_VERSION_STR")
+  QT_VERSION=$(brew list qt5 --versions | sed -e 's/qt //')
   sudo ln -sf /usr/local/Cellar/qt/${QT_VERSION}/plugins /usr/local/plugins
   sudo ln -sf /usr/local/Cellar/qt/${QT_VERSION}/mkspecs /usr/local/mkspecs
 
